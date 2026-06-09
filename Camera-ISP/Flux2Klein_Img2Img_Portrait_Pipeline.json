@@ -1,0 +1,365 @@
+{
+  "id": "0d9dfc15-6e71-47b1-a461-2e21c99efb4d",
+  "revision": 0,
+  "last_node_id": 19,
+  "last_link_id": 30,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [-920, 220],
+      "size": [320, 460],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        { "name": "IMAGE", "type": "IMAGE", "links": [1] },
+        { "name": "MASK", "type": "MASK", "links": null }
+      ],
+      "title": "Input reference image",
+      "properties": { "Node name for S&R": "LoadImage", "cnr_id": "comfy-core", "ver": "0.9.2" },
+      "widgets_values": ["input.png", "image"]
+    },
+    {
+      "id": 2,
+      "type": "ResizeImageMaskNode",
+      "pos": [-560, 220],
+      "size": [270, 106],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [{ "name": "input", "type": "IMAGE,MASK", "link": 1 }],
+      "outputs": [{ "name": "resized", "type": "IMAGE", "links": [2] }],
+      "title": "Normalize to 1MP working canvas",
+      "properties": { "Node name for S&R": "ResizeImageMaskNode", "cnr_id": "comfy-core", "ver": "0.9.2" },
+      "widgets_values": ["scale total pixels", 1, "lanczos"]
+    },
+    {
+      "id": 3,
+      "type": "ResizeImageMaskNode",
+      "pos": [-260, 220],
+      "size": [270, 106],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [{ "name": "input", "type": "IMAGE,MASK", "link": 2 }],
+      "outputs": [{ "name": "resized", "type": "IMAGE", "links": [3] }],
+      "title": "Snap to Flux multiple of 16",
+      "properties": { "Node name for S&R": "ResizeImageMaskNode", "cnr_id": "comfy-core", "ver": "0.9.2" },
+      "widgets_values": ["scale to multiple", 16, "lanczos"]
+    },
+    {
+      "id": 4,
+      "type": "VAELoader",
+      "pos": [-900, -80],
+      "size": [270, 58],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [{ "name": "VAE", "type": "VAE", "links": [4, 5] }],
+      "properties": { "Node name for S&R": "VAELoader", "cnr_id": "comfy-core", "ver": "0.3.39" },
+      "widgets_values": ["flux2-vae.safetensors"]
+    },
+    {
+      "id": 5,
+      "type": "UNETLoader",
+      "pos": [-560, -160],
+      "size": [330, 82],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [{ "name": "MODEL", "type": "MODEL", "links": [6] }],
+      "title": "Flux.2 Klein 9B quality model",
+      "properties": { "Node name for S&R": "UNETLoader", "cnr_id": "comfy-core", "ver": "0.9.2" },
+      "widgets_values": ["Flux.2\\flux-2-klein-base-9b-fp8.safetensors", "default"]
+    },
+    {
+      "id": 6,
+      "type": "CLIPLoader",
+      "pos": [-560, -20],
+      "size": [300, 106],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [{ "name": "CLIP", "type": "CLIP", "links": [7] }],
+      "properties": { "Node name for S&R": "CLIPLoader", "cnr_id": "comfy-core", "ver": "0.3.73" },
+      "widgets_values": ["qwen_3_8b_fp8mixed.safetensors", "flux2", "default"]
+    },
+    {
+      "id": 7,
+      "type": "LoraLoaderBypass",
+      "pos": [-140, -150],
+      "size": [330, 126],
+      "flags": {},
+      "order": 6,
+      "mode": 4,
+      "inputs": [
+        { "name": "model", "type": "MODEL", "link": 6 },
+        { "name": "clip", "type": "CLIP", "link": 7 }
+      ],
+      "outputs": [
+        { "name": "MODEL", "type": "MODEL", "links": [8] },
+        { "name": "CLIP", "type": "CLIP", "links": [9, 10] }
+      ],
+      "title": "Future identity/style LoRA slot - bypassed",
+      "properties": { "Node name for S&R": "LoraLoaderBypass", "cnr_id": "comfy-core", "ver": "0.9.2" },
+      "widgets_values": ["PUT_YOUR_FLUX2_KLEIN_9B_LORA_HERE.safetensors", 0.75, 0.0]
+    },
+    {
+      "id": 8,
+      "type": "CLIPTextEncode",
+      "pos": [220, -120],
+      "size": [470, 170],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [{ "name": "clip", "type": "CLIP", "link": 9 }],
+      "outputs": [{ "name": "CONDITIONING", "type": "CONDITIONING", "slot_index": 0, "links": [11] }],
+      "title": "Positive instruction",
+      "properties": { "Node name for S&R": "CLIPTextEncode", "cnr_id": "comfy-core", "ver": "0.3.39" },
+      "widgets_values": [
+        "Turn the reference into a natural candid high-end smartphone portrait of the same virtual influencer, realistic skin microtexture, natural pores, tiny asymmetries, believable eyelashes, natural hair strands, soft imperfect makeup, real camera exposure, coherent room lighting, subtle lens falloff, editorial lifestyle photo, not overprocessed"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "CLIPTextEncode",
+      "pos": [220, 100],
+      "size": [470, 140],
+      "flags": { "collapsed": false },
+      "order": 9,
+      "mode": 0,
+      "inputs": [{ "name": "clip", "type": "CLIP", "link": 10 }],
+      "outputs": [{ "name": "CONDITIONING", "type": "CONDITIONING", "slot_index": 0, "links": [12] }],
+      "title": "Negative prompt",
+      "properties": { "Node name for S&R": "CLIPTextEncode", "cnr_id": "comfy-core", "ver": "0.3.39" },
+      "widgets_values": [
+        "cgi, plastic skin, waxy face, doll, airbrushed, over-sharpened, painterly, fake pores, uncanny eyes, distorted pupils, bad teeth, bad hands, extra fingers, text, watermark, lowres, blurry, oversaturated, heavy HDR"
+      ]
+    },
+    {
+      "id": 10,
+      "type": "VAEEncode",
+      "pos": [40, 280],
+      "size": [180, 46],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        { "name": "pixels", "type": "IMAGE", "link": 3 },
+        { "name": "vae", "type": "VAE", "link": 4 }
+      ],
+      "outputs": [{ "name": "LATENT", "type": "LATENT", "links": [13, 14] }],
+      "properties": { "Node name for S&R": "VAEEncode", "cnr_id": "comfy-core", "ver": "0.9.2" },
+      "widgets_values": []
+    },
+    {
+      "id": 11,
+      "type": "ReferenceLatent",
+      "pos": [740, -120],
+      "size": [205, 46],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        { "name": "conditioning", "type": "CONDITIONING", "link": 11 },
+        { "name": "latent", "shape": 7, "type": "LATENT", "link": 14 }
+      ],
+      "outputs": [{ "name": "CONDITIONING", "type": "CONDITIONING", "links": [15] }],
+      "title": "Reference latent conditioning",
+      "properties": { "Node name for S&R": "ReferenceLatent", "cnr_id": "comfy-core", "ver": "0.9.2" },
+      "widgets_values": []
+    },
+    {
+      "id": 12,
+      "type": "KSampler",
+      "pos": [1040, -110],
+      "size": [315, 262],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        { "name": "model", "type": "MODEL", "link": 8 },
+        { "name": "positive", "type": "CONDITIONING", "link": 15 },
+        { "name": "negative", "type": "CONDITIONING", "link": 12 },
+        { "name": "latent_image", "type": "LATENT", "link": 13 }
+      ],
+      "outputs": [{ "name": "LATENT", "type": "LATENT", "slot_index": 0, "links": [16] }],
+      "title": "Flux.2 Klein img2img sampler",
+      "properties": { "Node name for S&R": "KSampler", "cnr_id": "comfy-core", "ver": "0.3.39" },
+      "widgets_values": [23062026, "fixed", 20, 4.5, "euler", "simple", 0.58]
+    },
+    {
+      "id": 13,
+      "type": "VAEDecode",
+      "pos": [1420, -100],
+      "size": [180, 46],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        { "name": "samples", "type": "LATENT", "link": 16 },
+        { "name": "vae", "type": "VAE", "link": 5 }
+      ],
+      "outputs": [{ "name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [17] }],
+      "properties": { "Node name for S&R": "VAEDecode", "cnr_id": "comfy-core", "ver": "0.3.39" },
+      "widgets_values": []
+    },
+    {
+      "id": 14,
+      "type": "UpscaleModelLoader",
+      "pos": [1420, 160],
+      "size": [360, 58],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [{ "name": "UPSCALE_MODEL", "type": "UPSCALE_MODEL", "links": [18] }],
+      "title": "Primary local upscaler",
+      "properties": { "Node name for S&R": "UpscaleModelLoader", "cnr_id": "comfy-core", "ver": "0.3.65" },
+      "widgets_values": ["4x_NMKD-Superscale-SP_178000_G.pth"]
+    },
+    {
+      "id": 15,
+      "type": "ImageUpscaleWithModel",
+      "pos": [1840, -40],
+      "size": [260, 60],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        { "name": "upscale_model", "type": "UPSCALE_MODEL", "link": 18 },
+        { "name": "image", "type": "IMAGE", "link": 17 }
+      ],
+      "outputs": [{ "name": "IMAGE", "type": "IMAGE", "links": [19] }],
+      "title": "AI upscale pass",
+      "properties": { "Node name for S&R": "ImageUpscaleWithModel", "cnr_id": "comfy-core", "ver": "0.3.65" },
+      "widgets_values": []
+    },
+    {
+      "id": 16,
+      "type": "CameraISP_GrainSimulator",
+      "pos": [2220, -100],
+      "size": [420, 720],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        { "name": "image", "type": "IMAGE", "link": 19 },
+        { "name": "profile_path", "type": "STRING", "link": null },
+        { "name": "development_curve", "shape": 7, "type": "IMAGE", "link": null },
+        { "name": "mask", "shape": 7, "type": "MASK", "link": null }
+      ],
+      "outputs": [
+        { "name": "image", "type": "IMAGE", "links": [20, 21] },
+        { "name": "effect_delta", "type": "IMAGE", "links": [22] }
+      ],
+      "title": "Final camera/sensor realism pass",
+      "properties": { "Node name for S&R": "CameraISP_GrainSimulator" },
+      "widgets_values": [
+        "iphone_15",
+        23062026,
+        0.62,
+        400,
+        "RGGB",
+        0.006,
+        0.008,
+        0.002,
+        0.14,
+        1.25,
+        0.004,
+        0.06,
+        0.15,
+        0.025,
+        "2048",
+        ""
+      ]
+    },
+    {
+      "id": 17,
+      "type": "PreviewImage",
+      "pos": [2680, -80],
+      "size": [360, 320],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [{ "name": "images", "type": "IMAGE", "link": 20 }],
+      "outputs": [],
+      "title": "Preview final",
+      "properties": { "Node name for S&R": "PreviewImage", "cnr_id": "comfy-core", "ver": "0.3.65" },
+      "widgets_values": []
+    },
+    {
+      "id": 18,
+      "type": "PreviewImage",
+      "pos": [2680, 300],
+      "size": [360, 320],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [{ "name": "images", "type": "IMAGE", "link": 22 }],
+      "outputs": [],
+      "title": "Preview effect delta",
+      "properties": { "Node name for S&R": "PreviewImage", "cnr_id": "comfy-core", "ver": "0.3.65" },
+      "widgets_values": []
+    },
+    {
+      "id": 19,
+      "type": "SaveImage",
+      "pos": [3060, -80],
+      "size": [580, 620],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [{ "name": "images", "type": "IMAGE", "link": 21 }],
+      "outputs": [],
+      "title": "Save transparent virtual influencer output",
+      "properties": { "Node name for S&R": "SaveImage", "cnr_id": "comfy-core", "ver": "0.3.73" },
+      "widgets_values": ["Forensic_Output/Flux2_Img2Img_Pro"]
+    }
+  ],
+  "links": [
+    [1, 1, 0, 2, 0, "IMAGE"],
+    [2, 2, 0, 3, 0, "IMAGE"],
+    [3, 3, 0, 10, 0, "IMAGE"],
+    [4, 4, 0, 10, 1, "VAE"],
+    [5, 4, 0, 13, 1, "VAE"],
+    [6, 5, 0, 7, 0, "MODEL"],
+    [7, 6, 0, 7, 1, "CLIP"],
+    [8, 7, 0, 12, 0, "MODEL"],
+    [9, 7, 1, 8, 0, "CLIP"],
+    [10, 7, 1, 9, 0, "CLIP"],
+    [11, 8, 0, 11, 0, "CONDITIONING"],
+    [12, 9, 0, 12, 2, "CONDITIONING"],
+    [13, 10, 0, 12, 3, "LATENT"],
+    [14, 10, 0, 11, 1, "LATENT"],
+    [15, 11, 0, 12, 1, "CONDITIONING"],
+    [16, 12, 0, 13, 0, "LATENT"],
+    [17, 13, 0, 15, 1, "IMAGE"],
+    [18, 14, 0, 15, 0, "UPSCALE_MODEL"],
+    [19, 15, 0, 16, 0, "IMAGE"],
+    [20, 16, 0, 17, 0, "IMAGE"],
+    [21, 16, 0, 19, 0, "IMAGE"],
+    [22, 16, 1, 18, 0, "IMAGE"]
+  ],
+  "groups": [
+    { "id": 1, "title": "01 Image-to-image input", "bounding": [-960, 180, 980, 560], "color": "#3a3a3a", "font_size": 24, "flags": {} },
+    { "id": 2, "title": "02 Flux.2 Klein 9B + future LoRA", "bounding": [-940, -220, 1680, 420], "color": "#355070", "font_size": 24, "flags": {} },
+    { "id": 3, "title": "03 Generate / decode / upscale / camera realism", "bounding": [760, -180, 2720, 860], "color": "#5f4b8b", "font_size": 24, "flags": {} }
+  ],
+  "config": {},
+  "extra": {
+    "ds": { "scale": 0.72, "offset": [1020, 420] },
+    "frontendVersion": "1.41.21",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true,
+    "workflow_note": "Original img2img workflow inspired by public PhotoFlow direction, built around Flux.2 Klein 9B, optional LoRA slot, local upscale, and Camera ISP forensic camera/grain pass."
+  },
+  "version": 0.4
+}
